@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- iPhone WebApp / Home Screen -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GTE Laden">
+  <meta name="theme-color" content="#0f172a">
+
+  <title>⚡ Passat GTE · Laderechner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f172a;
+      --card:     #1e293b;
+      --border:   #334155;
+      --sub:      #475569;
+      --muted:    #64748b;
+      --text:     #94a3b8;
+      --white:    #f1f5f9;
+      --blue:     #38bdf8;
+      --green:    #4ade80;
+      --yellow:   #facc15;
+      --orange:   #fb923c;
+      --red:      #f87171;
+      --lime:     #a3e635;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 20px);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+    .sub { font-size: 11px; color: var(--sub); margin-bottom: 20px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Eingaben */
+    .eingabe-zeile {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .eingabe-zeile:last-of-type { border-bottom: none; }
+    .eingabe-label { font-size: 14px; color: var(--text); }
+    .eingabe-rechts { display: flex; align-items: center; gap: 6px; }
+
+    input[type="number"], input[type="text"] {
+      width: 88px;
+      background: var(--bg);
+      border: 1px solid var(--sub);
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: var(--white);
+      font-size: 15px;
+      text-align: right;
+      -webkit-appearance: none;
+      outline: none;
+    }
+    input:focus { border-color: var(--blue); }
+    .einheit { font-size: 12px; color: var(--sub); width: 46px; }
+
+    .link-hinweis { font-size: 11px; color: var(--sub); margin-top: 10px; }
+    .link-hinweis a { color: var(--blue); text-decoration: none; }
+
+    /* Fahrprofil */
+    .profil-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .profil-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 4px;
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .profil-btn .icon { font-size: 22px; }
+    .profil-btn .lbl { font-size: 11px; margin-top: 3px; }
+    .profil-btn.aktiv {
+      background: #0c2a4a;
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    /* Temp-Banner */
+    .temp-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    /* Ergebnis-Zeilen */
+    .zeile {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #1e293b;
+    }
+    .zeile:last-of-type { border-bottom: none; }
+    .z-label { font-size: 13px; color: var(--text); padding-right: 8px; flex: 1; }
+    .z-wert  { font-size: 15px; text-align: right; white-space: nowrap; color: var(--white); }
+    .z-wert.blau  { color: var(--blue);  font-weight: 700; }
+    .z-wert.gross { font-size: 20px; }
+    .z-wert.gruen { color: var(--green); font-weight: 700; }
+    .z-wert.rot   { color: var(--red);   font-weight: 700; }
+
+    /* Fazit */
+    .fazit {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid;
+      line-height: 1.5;
+    }
+    .fazit.lohnt  { background: #052e16; color: var(--green); border-color: #22c55e; }
+    .fazit.nolohnt{ background: #2d0f0f; color: var(--red);   border-color: #ef4444; }
+
+    /* Break-even card border */
+    #card-breakeven { border-color: var(--border); transition: border-color 0.3s; }
+
+    .quelle {
+      font-size: 10px;
+      color: #1e2a3a;
+      text-align: center;
+      margin-top: 8px;
+      line-height: 1.7;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Passat GTE · Laderechner</h1>
+  <p class="sub">Reale Verbräuche · ADAC EcoTest 2020 · temperaturkorrigiert</p>
+
+  <!-- Eingaben -->
+  <div class="card">
+    <div class="card-title">📥 Eingaben</div>
+    <div class="eingabe-zeile">
+      <span class="eingabe-label">E10-Preis</span>
+      <div class="eingabe-rechts">
+        <input type="number" id="e10" value="1.789" step="0.001" inputmode="decimal">
+        <span class="einheit">€/Liter</span>
+      </div>
+    </div>
+    <div class="eingabe-zeile">
+      <span class="eingabe-label">Strompreis</span>
+      <div class="eingabe-rechts">
+        <input type="number" id="strom" value="0.31" step="0.01" inputmode="decimal">
+        <span class="einheit">€/kWh</span>
+      </div>
+    </div>
+    <div class="eingabe-zeile">
+      <span class="eingabe-label">Außentemperatur</span>
+      <div class="eingabe-rechts">
+        <input type="number" id="temp" value="15" step="1" inputmode="decimal">
+        <span class="einheit">°C</span>
+      </div>
+    </div>
+    <p class="link-hinweis">
+      Aktuelle Preise: <a href="https://www.clever-tanken.de" target="_blank">clever-tanken.de</a>
+    </p>
+  </div>
+
+  <!-- Fahrprofil -->
+  <div class="card">
+    <div class="card-title">🗺️ Fahrprofil</div>
+    <div class="profil-grid">
+      <button class="profil-btn" data-profil="stadt">
+        <div class="icon">🏙️</div><div class="lbl">Stadt</div>
+      </button>
+      <button class="profil-btn" data-profil="land">
+        <div class="icon">🛣️</div><div class="lbl">Landstraße</div>
+      </button>
+      <button class="profil-btn" data-profil="autobahn">
+        <div class="icon">🚗</div><div class="lbl">Autobahn</div>
+      </button>
+      <button class="profil-btn aktiv" data-profil="gemischt">
+        <div class="icon">🗺️</div><div class="lbl">Gemischt</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Temp-Banner -->
+  <div class="temp-banner" id="temp-banner"></div>
+
+  <!-- E10 -->
+  <div class="card" id="card-e10">
+    <div class="card-title" id="titel-e10">⛽ E10 auf 100 km</div>
+    <div class="zeile"><span class="z-label">Basisverbrauch (ADAC, leerer Akku)</span><span class="z-wert" id="basis-benzin">–</span></div>
+    <div class="zeile"><span class="z-label" id="lbl-korrekt-benzin">Temperaturkorrektur</span><span class="z-wert" id="korrekt-benzin">–</span></div>
+    <div class="zeile"><span class="z-label">Korrigierter Verbrauch</span><span class="z-wert" id="verbrauch-benzin">–</span></div>
+    <div class="zeile"><span class="z-label">Preis pro Liter</span><span class="z-wert" id="preis-liter">–</span></div>
+    <div class="zeile"><span class="z-label">Kosten / 100 km</span><span class="z-wert blau" id="kosten-benzin">–</span></div>
+  </div>
+
+  <!-- Elektrisch -->
+  <div class="card" id="card-strom">
+    <div class="card-title" id="titel-strom">🔌 Elektrisch auf 100 km</div>
+    <div class="zeile"><span class="z-label">Basisverbrauch (ADAC, inkl. Ladeverlust)</span><span class="z-wert" id="basis-strom">–</span></div>
+    <div class="zeile"><span class="z-label" id="lbl-korrekt-strom">Temperaturkorrektur</span><span class="z-wert" id="korrekt-strom">–</span></div>
+    <div class="zeile"><span class="z-label">Korrigierter Verbrauch</span><span class="z-wert" id="verbrauch-strom">–</span></div>
+    <div class="zeile"><span class="z-label">Strompreis</span><span class="z-wert" id="preis-kwh">–</span></div>
+    <div class="zeile"><span class="z-label">Kosten / 100 km</span><span class="z-wert blau" id="kosten-strom">–</span></div>
+  </div>
+
+  <!-- Break-even -->
+  <div class="card" id="card-breakeven">
+    <div class="card-title">⚖️ Break-even</div>
+    <div class="zeile"><span class="z-label">Max. Strompreis (Gleichstand mit E10)</span><span class="z-wert blau gross" id="max-kwh">–</span></div>
+    <div class="zeile"><span class="z-label">Dein Strompreis</span><span class="z-wert" id="dein-strom">–</span></div>
+    <div class="zeile"><span class="z-label">Ersparnis / 100 km</span><span class="z-wert" id="sparnis">–</span></div>
+    <div class="fazit" id="fazit"></div>
+  </div>
+
+  <p class="quelle">
+    Benzin: ADAC EcoTest Passat GTE 2020, Hybridmodus/leerer Akku · Elektrisch: ADAC + Fahrerforen<br>
+    Temperaturkorrektur Strom: Batterie-Effizienzfaktor (Heizung + Zellverluste)
+  </p>
+
+<script>
+  const PROFILE = {
+    stadt:    { label: "Stadt",      icon: "🏙️", benzin_l: 6.3, strom_kwh: 25.2 },
+    land:     { label: "Landstraße", icon: "🛣️", benzin_l: 6.3, strom_kwh: 22.0 },
+    autobahn: { label: "Autobahn",   icon: "🚗", benzin_l: 8.4, strom_kwh: 28.0 },
+    gemischt: { label: "Gemischt",   icon: "🗺️", benzin_l: 6.9, strom_kwh: 25.2 },
+  };
+
+  const TEMP_STUFEN = [
+    { min: 20,  faktor: 1.00, label: "Optimal",        farbe: "#4ade80" },
+    { min: 10,  faktor: 0.92, label: "Gut",             farbe: "#a3e635" },
+    { min: 0,   faktor: 0.82, label: "Reduziert",       farbe: "#facc15" },
+    { min: -10, faktor: 0.70, label: "Eingeschränkt",   farbe: "#fb923c" },
+    { min: -99, faktor: 0.60, label: "Stark reduziert", farbe: "#f87171" },
+  ];
+
+  function getTempInfo(t) {
+    return TEMP_STUFEN.find(s => t >= s.min) || TEMP_STUFEN[4];
+  }
+  function stromKorrektur(t)  { return 1 / getTempInfo(t).faktor; }
+  function benzinKorrektur(t) {
+    if (t >= 10) return 1.00;
+    if (t >= 0)  return 1.05;
+    if (t >= -10) return 1.10;
+    return 1.15;
+  }
+
+  let aktivProfil = "gemischt";
+
+  function berechne() {
+    const e10f   = parseFloat(document.getElementById("e10").value)   || 0;
+    const stromf = parseFloat(document.getElementById("strom").value) || 0;
+    const tempf  = parseFloat(document.getElementById("temp").value)  || 10;
+    const p      = PROFILE[aktivProfil];
+    const ti     = getTempInfo(tempf);
+
+    const bKorr  = benzinKorrektur(tempf);
+    const sKorr  = stromKorrektur(tempf);
+    const bReal  = p.benzin_l  * bKorr;
+    const sReal  = p.strom_kwh * sKorr;
+
+    const kostenB = e10f   * bReal;
+    const kostenS = stromf * sReal;
+    const sparnis = kostenB - kostenS;
+    const maxKwh  = bReal > 0 ? kostenB / sReal : 0;
+    const lohnt   = sparnis > 0;
+
+    // Temp-Banner
+    const banner = document.getElementById("temp-banner");
+    banner.style.borderColor = ti.farbe;
+    banner.innerHTML =
+      `<span style="color:#94a3b8">🌡️ ${tempf}°C → </span>` +
+      `<span style="color:${ti.farbe};font-weight:700">${ti.label}</span>` +
+      `<span style="color:#64748b"> · Strom +${((sKorr-1)*100).toFixed(0)}%` +
+      ` · Benzin +${((bKorr-1)*100).toFixed(0)}% (ggü. 20°C)</span>`;
+
+    // Titel
+    document.getElementById("titel-e10").textContent   = `⛽ E10 auf 100 km · ${p.icon} ${p.label}`;
+    document.getElementById("titel-strom").textContent  = `🔌 Elektrisch auf 100 km · ${p.icon} ${p.label}`;
+
+    // E10-Block
+    document.getElementById("basis-benzin").textContent    = `${p.benzin_l.toFixed(1)} l / 100 km`;
+    document.getElementById("lbl-korrekt-benzin").textContent = `Temperaturkorrektur (${tempf}°C)`;
+    document.getElementById("korrekt-benzin").textContent  = `× ${bKorr.toFixed(2)}`;
+    document.getElementById("verbrauch-benzin").textContent = `${bReal.toFixed(2)} l / 100 km`;
+    document.getElementById("preis-liter").textContent     = `${e10f.toFixed(3)} €`;
+    document.getElementById("kosten-benzin").textContent   = `${kostenB.toFixed(2)} €`;
+
+    // Strom-Block
+    document.getElementById("basis-strom").textContent    = `${p.strom_kwh.toFixed(1)} kWh / 100 km`;
+    document.getElementById("lbl-korrekt-strom").textContent = `Temperaturkorrektur (${tempf}°C)`;
+    document.getElementById("korrekt-strom").textContent  = `× ${sKorr.toFixed(2)}`;
+    document.getElementById("verbrauch-strom").textContent = `${sReal.toFixed(2)} kWh / 100 km`;
+    document.getElementById("preis-kwh").textContent      = `${stromf.toFixed(3)} €/kWh`;
+    document.getElementById("kosten-strom").textContent   = `${kostenS.toFixed(2)} €`;
+
+    // Break-even
+    document.getElementById("card-breakeven").style.borderColor = lohnt ? "#22c55e" : "#ef4444";
+    document.getElementById("max-kwh").textContent  = `${maxKwh.toFixed(3)} €/kWh`;
+    document.getElementById("dein-strom").textContent = `${stromf.toFixed(3)} €/kWh`;
+
+    const spEl = document.getElementById("sparnis");
+    spEl.textContent = `${sparnis > 0 ? "+" : ""}${sparnis.toFixed(2)} €`;
+    spEl.className = "z-wert " + (lohnt ? "gruen" : "rot");
+
+    const fazit = document.getElementById("fazit");
+    fazit.className = "fazit " + (lohnt ? "lohnt" : "nolohnt");
+    fazit.textContent = lohnt
+      ? `✅ Laden lohnt sich — ${sparnis.toFixed(2)} € Ersparnis / 100 km. Break-even bei ${maxKwh.toFixed(3)} €/kWh.`
+      : `❌ E10 günstiger — dein Strom ist ${(stromf - maxKwh).toFixed(3)} €/kWh über dem Break-even von ${maxKwh.toFixed(3)} €/kWh.`;
+  }
+
+  // Profil-Buttons
+  document.querySelectorAll(".profil-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".profil-btn").forEach(b => b.classList.remove("aktiv"));
+      btn.classList.add("aktiv");
+      aktivProfil = btn.dataset.profil;
+      berechne();
+    });
+  });
+
+  // Inputs
+  ["e10","strom","temp"].forEach(id => {
+    document.getElementById(id).addEventListener("input", berechne);
+  });
+
+  // Initial
+  berechne();
+</script>
+</body>
+</html>
